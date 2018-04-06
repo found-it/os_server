@@ -18,8 +18,6 @@
 #include "../../shared/base.h"
 #include "../include/server.h"
 
-#define SRV_READ  "/tmp/server_read"
-#define SRV_WRITE "/tmp/server_write"
 
 /**
  *  main()
@@ -31,8 +29,9 @@ int main(int argc, char **argv)
     pid_t pid;
     int readfd;
     int writefd;
-
-    mode_t mode = S_IRUSR | S_IWUSR;// | S_IRGRP | S_IROTH;
+    int bytes;
+    struct message client_msg;
+    mode_t mode = S_IRUSR | S_IWUSR;
 
     if (mkfifo(SRV_READ, mode) < 0 && (errno != EEXIST))
     {
@@ -47,10 +46,8 @@ int main(int argc, char **argv)
     }
 
     readfd = open(SRV_READ, O_RDONLY);
-    int bytes;
-    char buf[MAX_LEN];
-    struct message client_msg;
     memset(&client_msg, '\0', sizeof(struct message));
+
     while ((bytes = read(readfd, &client_msg, sizeof(struct message))) > 0)
     {
         printf("Read in %d bytes\n", bytes);

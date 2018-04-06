@@ -6,7 +6,7 @@
  */
 
 #include "../include/client.h"
-#include "../include/base.h"
+#include "../../shared/base.h"
 
 /**
  *  usage()

@@ -6,7 +6,7 @@
  */
 
 #include "../include/server.h"
-#include "../include/base.h"
+#include "../../shared/base.h"
 
 /**
  *  strip_newline macro, strips newline off incoming message.

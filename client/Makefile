@@ -17,10 +17,10 @@ TARGET = cs_2_client
 client: $(OBJ)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
 
-main.o: src/main.c
+main.o: src/main.c ../shared/base.h
 	$(CC) $(CFLAGS) -c src/main.c
 
-client.o: src/client.c include/client.h
+client.o: src/client.c include/client.h ../shared/base.h
 	$(CC) $(CFLAGS) -c src/client.c
 
 clean:

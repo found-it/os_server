@@ -24,6 +24,9 @@
 #define TEAL  "\e[38;2;0;255;255m"
 #define RESET "\e[0m"
 
+#define SRV_READ  "/tmp/server_read"
+#define SRV_WRITE "/tmp/server_write"
+
 /**
  *  Message type
  */

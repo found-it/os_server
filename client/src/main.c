@@ -24,20 +24,10 @@
 int main(int argc, char **argv)
 {
     struct message msg;
-    const char swrite[] = "/tmp/server_read";
-    int wfd = open(swrite, O_WRONLY);
-
-#if 0
-    char buf[MAX_LEN];
-    fgets(buf, MAX_LEN, stdin);
-    strcpy(msg.text, buf);
-#endif
-
+    int wfd = open(SRV_READ, O_WRONLY);
     msg.type = CONNECT;
     msg.pid  = getpid();
-    msg.text = NULL;
-
-    printf("writing: %s\n");
+    printf("Attempting to connect to the server...\n");
     write(wfd, &msg, sizeof(struct message));
 
     close(wfd);

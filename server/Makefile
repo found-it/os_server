@@ -17,10 +17,10 @@ TARGET = cs_2_server
 server: $(OBJ)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
 
-main.o: src/main.c include/base.h
+main.o: src/main.c ../shared/base.h
 	$(CC) $(CFLAGS) -c src/main.c
 
-server.o: src/server.c include/server.h include/base.h
+server.o: src/server.c include/server.h ../shared/base.h
 	$(CC) $(CFLAGS) -c src/server.c
 
 clean:
