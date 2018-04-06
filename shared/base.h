@@ -16,6 +16,9 @@
 #define WRITE    1
 #define READ     0
 
+#define CLIENT_WR_NAME_SIZE 30
+#define CLIENT_RD_NAME_SIZE 27
+
 /* Colors */
 #define RED   "\e[38;2;255;0;0m"
 #define GREEN "\e[38;2;0;255;0m"
@@ -24,29 +27,32 @@
 #define TEAL  "\e[38;2;0;255;255m"
 #define RESET "\e[0m"
 
-#define SRV_READ  "/tmp/server_read"
-#define SRV_WRITE "/tmp/server_write"
+#define SRV_READ  "/tmp/server_np"
 
 /**
  *  Message type
  */
-enum message_type
+enum msg_type
 {
     TEXT    = 0,
-    COMMAND = 1,
-    CONNECT = 2
+    COMMAND = 1
 };
 
 
 /**
  *  Message struct
  */
-struct message
+struct pipe_msg
 {
-    enum message_type type;
-    pid_t pid;
+    enum msg_type type;
     char text[MAX_LEN];
 };
 
+struct connect_msg
+{
+    pid_t pid;
+    char readp[CLIENT_RD_NAME_SIZE];
+    char writep[CLIENT_WR_NAME_SIZE];
+};
 
 #endif

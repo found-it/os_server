@@ -13,6 +13,7 @@ CC     = gcc
 CFLAGS = -Wall
 OBJ    = main.o client.o
 TARGET = cs_2_client
+PIPES  = ../shared/pipes
 
 client: $(OBJ)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
@@ -26,3 +27,4 @@ client.o: src/client.c include/client.h ../shared/base.h
 clean:
 	rm -f $(OBJ)
 	rm -f $(TARGET)
+	rm -f $(PIPES)/*_read $(PIPES)/*_write

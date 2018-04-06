@@ -26,3 +26,4 @@ server.o: src/server.c include/server.h ../shared/base.h
 clean:
 	rm -f $(OBJ)
 	rm -f $(TARGET)
+	rm -f ../shared/*_receive ../shared/*_send
