@@ -2,7 +2,7 @@
  *  \file   messages.c
  *  \author James Petersen
  *
- *  \brief  
+ *  \brief
  */
 
 #include "../include/base.h"
@@ -12,17 +12,22 @@
 int send_pipe_msg(int fd, int type, int cmd, void *body)
 {
     struct pipe_msg msg;
-    msg.type = type;
-    msg.cmd  = cmd;
-    if (type == TEXT)
+
+    /* set the flags */
+    msg.flags.type = type;
+    msg.flags.cmd  = cmd;
+
+    /* fill the body of the message */
+    if (type == TEXT)                                   /* text */
         strncpy(msg.body.text, (char*)body, MAX_LEN);
 
-    else if (type == RESPONSE && cmd == TIME)
-        msg.body.time = *(struct tm*)body;
-    
-    else if (type == RESPONSE && cmd == STATUS)
-        strncpy(msg.body.text, (char*)body, MAX_LEN);
+    else if (type == RESPONSE && cmd == TIME)           /* time response */
+        msg.body.time = *(struct tm *)body;
 
+    else if (type == RESPONSE && cmd == STATUS)         /* status response */
+        msg.body.status = *(int *)body;
+
+    /* send the message */
     if (write(fd, &msg, sizeof(msg)) < 0)
     {
         fprintf(stderr, "Error sending pipe_msg through pipe.\n");

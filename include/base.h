@@ -2,7 +2,7 @@
  *  \file   base.h
  *  \author James Petersen
  *
- *  \brief  
+ *  \brief
  */
 
 #ifndef BASE_H

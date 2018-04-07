@@ -21,6 +21,10 @@ enum commands
     Time    = 5
 };
 
+/**
+ *  strip_newline macro, strips newline off incoming message.
+ */
+#define strip_newline(str) str[strlen(str)-1] = '\0'
 
 /**
  *  usage()
@@ -118,8 +122,9 @@ static int exec_command(const int fd[], const int cmd, char *input)
     switch (cmd)
     {
         case Send:
-            /* strip off 'send:' */
+            /* strip off 'send:' and '\n' */
             memmove(input, input + 5, MAX_LEN - 5);
+            strip_newline(input);
             send_pipe_msg(fd[WRITE], TEXT, NA, input);
             break;
 
@@ -128,31 +133,30 @@ static int exec_command(const int fd[], const int cmd, char *input)
             send_pipe_msg(fd[WRITE], COMMAND, EXIT, NULL);
             exit = TRUE;
             break;
-        
+
         case Help:
             usage();
             break;
-        
+
         case Enter:
             /* do nothing */
             break;
-        
+
         case Status:
             send_pipe_msg(fd[WRITE], COMMAND, STATUS, NULL);
 
             read(fd[READ], &in_msg, sizeof(struct pipe_msg));
-            printf("Status: %s\n", in_msg.body.text);
+            printf("Number of Clients: %d\n", in_msg.body.status);
 
             break;
-        
+
         case Time:
             send_pipe_msg(fd[WRITE], COMMAND, TIME, NULL);
 
             read(fd[READ], &in_msg, sizeof(struct pipe_msg));
             printf("Server Time: %s\n", asctime(&in_msg.body.time));
-
             break;
-        
+
         default:
             printf("Incorrect command. Type 'help' for list of commands.\n");
             break;

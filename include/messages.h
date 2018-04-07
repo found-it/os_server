@@ -3,7 +3,7 @@
  *  \file   messages.h
  *  \author James Petersen
  *
- *  \brief  
+ *  \brief
  */
 
 #ifndef MESSAGES_H
@@ -26,6 +26,7 @@ enum msg_type
     RESPONSE = 2
 };
 
+
 /**
  *  Command type
  */
@@ -38,12 +39,25 @@ enum cmd_type
 };
 
 
+/**
+ *  Message flags
+ */
+struct msg_flags
+{
+    enum msg_type type;
+    enum cmd_type cmd;
+};
+
+
+/**
+ *  Body of the message.
+ */
 union msg_body
 {
     char text[MAX_LEN];
     struct tm time;
+    int status;
 };
-
 
 
 /**
@@ -51,11 +65,15 @@ union msg_body
  */
 struct pipe_msg
 {
-    enum msg_type type;
-    enum cmd_type cmd;
-    union msg_body body;
+    struct msg_flags flags;
+    union  msg_body  body;
 };
 
+
+/**
+ *  Connection message, sends the PID of the client and
+ *  its read/write FIFO's.
+ */
 struct connect_msg
 {
     pid_t pid;
@@ -63,6 +81,13 @@ struct connect_msg
     char writep[CLIENT_WR_NAME_SIZE];
 };
 
+
+/**
+ *  send_pipe_msg()
+ *
+ *  \brief  This function writes the appropriate pipe_msg
+ *          to the pipe described by fd.
+ */
 int send_pipe_msg(int fd, int type, int cmd, void *text);
 
 #endif
