@@ -16,6 +16,8 @@
 #define MAX_LEN  100
 #define WRITE    1
 #define READ     0
+#define TRUE     1
+#define FALSE    0
 
 #define CLIENT_WR_NAME_SIZE 22
 #define CLIENT_RD_NAME_SIZE 19
@@ -39,6 +41,17 @@ enum msg_type
     COMMAND = 1
 };
 
+/**
+ *  Command type
+ */
+enum cmd_type
+{
+    NA     = 0,
+    TIME   = 1,
+    STATUS = 2,
+    EXIT   = 3
+};
+
 
 /**
  *  Message struct
@@ -46,6 +59,7 @@ enum msg_type
 struct pipe_msg
 {
     enum msg_type type;
+    enum cmd_type cmd;
     char text[MAX_LEN];
 };
 
