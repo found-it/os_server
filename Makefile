@@ -12,9 +12,9 @@
 
 CC     = gcc
 CFLAGS = -Wall
-OBJ_C  = client.o
+OBJ_C  = client.o messages.o
 TAR_C  = cs_2_client
-OBJ_S  = server.o
+OBJ_S  = server.o messages.o
 TAR_S  = cs_2_server
 PIPES  = ./pipes
 
@@ -31,6 +31,9 @@ client: $(OBJ_C)
 
 client.o: src/client.c include/client.h include/base.h
 	$(CC) $(CFLAGS) -c src/client.c
+
+messages.o: src/messages.c include/messages.h include/base.h
+	$(CC) $(CFLAGS) -c src/messages.c
 
 clean:
 	rm -f $(OBJ_C) $(OBJ_S)

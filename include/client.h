@@ -9,6 +9,7 @@
 #define CLIENT_H
 
 
+#include <time.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>

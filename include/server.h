@@ -8,6 +8,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>

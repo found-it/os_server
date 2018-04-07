@@ -8,7 +8,6 @@
 #ifndef BASE_H
 #define BASE_H
 
-#include <sys/types.h>
 
 /* Global defines */
 #define SUCCESS  0
@@ -32,42 +31,5 @@
 
 #define SRV_READ  "/tmp/server_np"
 
-/**
- *  Message type
- */
-enum msg_type
-{
-    TEXT    = 0,
-    COMMAND = 1
-};
-
-/**
- *  Command type
- */
-enum cmd_type
-{
-    NA     = 0,
-    TIME   = 1,
-    STATUS = 2,
-    EXIT   = 3
-};
-
-
-/**
- *  Message struct
- */
-struct pipe_msg
-{
-    enum msg_type type;
-    enum cmd_type cmd;
-    char text[MAX_LEN];
-};
-
-struct connect_msg
-{
-    pid_t pid;
-    char readp[CLIENT_RD_NAME_SIZE];
-    char writep[CLIENT_WR_NAME_SIZE];
-};
 
 #endif

@@ -8,6 +8,7 @@
 
 #include "../include/base.h"
 #include "../include/client.h"
+#include "../include/messages.h"
 
 
 enum commands
@@ -21,6 +22,27 @@ enum commands
 };
 
 
+/**
+ *  usage()
+ *
+ *  \brief  This function prints a help menu for the client.
+ */
+static void usage(void)
+{
+    printf("\n");
+    printf("List of commands for client\n");
+    printf("----------------------------------------------------------\n");
+    printf(GREEN " help " RESET "       - Displays help menu\n");
+    printf(GREEN " send:" TEAL "<text>" RESET " - Sends " TEAL "<text>" RESET " to the server\n");
+    printf("               (note: the ':' must be present)\n");
+    printf(GREEN " status " RESET "     - Exits the client and server processes\n");
+    printf(GREEN " time " RESET "       - Exits the client and server processes\n");
+    printf(GREEN " exit " RESET "       - Exits the client and server processes\n");
+    printf("----------------------------------------------------------\n");
+    printf("\n");
+} /* function usage */
+
+
 
 
 /**
@@ -28,23 +50,28 @@ enum commands
  */
 static int request_connection(const char *pipes[])
 {
-    int wfd;
+    int srv_fd;
     struct connect_msg cmsg;
     int stat = SUCCESS;
 
-    wfd = open(SRV_READ, O_WRONLY);
+    /* open server FIFO */
+    srv_fd = open(SRV_READ, O_WRONLY);
 
+    /* construct connection message */
     cmsg.pid  = getpid();
     strncpy(cmsg.readp,  pipes[READ], CLIENT_RD_NAME_SIZE);
     strncpy(cmsg.writep, pipes[WRITE], CLIENT_WR_NAME_SIZE);
 
+    /* send connection message */
     printf("Attempting to connect to the server...\n");
-    if (write(wfd, &cmsg, sizeof(struct connect_msg)) < 0)
+    if (write(srv_fd, &cmsg, sizeof(struct connect_msg)) < 0)
     {
         fprintf(stderr, "Failed to write connect message for PID: %d with errno: %d\n", getpid(), errno);
         stat = ERROR;
     }
-    close(wfd);
+
+    /* cleanup */
+    close(srv_fd);
     return stat;
 }
 
@@ -79,60 +106,53 @@ static int parse_command(const char *input)
 }
 
 
+
+
 /**
  *
  */
 static int exec_command(const int fd[], const int cmd, char *input)
 {
-    int exit = 0;
-    struct pipe_msg msg;
+    int exit = FALSE;
     struct pipe_msg in_msg;
     switch (cmd)
     {
         case Send:
-            printf("Send\n");
             /* strip off 'send:' */
             memmove(input, input + 5, MAX_LEN - 5);
-
-            msg.type = TEXT;
-            msg.cmd  = NA;
-            strncpy(msg.text, input, MAX_LEN);
-
-            write(fd[WRITE], &msg, sizeof(struct pipe_msg));
+            send_pipe_msg(fd[WRITE], TEXT, NA, input);
             break;
+
         case Exit:
             printf(RED "Client (PID: %d) exits\n" RESET, getpid());
-            msg.type = COMMAND;
-            msg.cmd  = EXIT;
-            write(fd[WRITE], &msg, sizeof(struct pipe_msg));
+            send_pipe_msg(fd[WRITE], COMMAND, EXIT, NULL);
             exit = TRUE;
             break;
+        
         case Help:
-            printf("usage\n");
+            usage();
             break;
+        
         case Enter:
             /* do nothing */
             break;
+        
         case Status:
-            printf("Status\n");
-            msg.type = COMMAND;
-            msg.cmd  = STATUS;
-            write(fd[WRITE], &msg, sizeof(struct pipe_msg));
+            send_pipe_msg(fd[WRITE], COMMAND, STATUS, NULL);
 
             read(fd[READ], &in_msg, sizeof(struct pipe_msg));
-            printf("Status: %s\n", in_msg.text);
+            printf("Status: %s\n", in_msg.body.text);
 
             break;
+        
         case Time:
-            printf("Time\n");
-            msg.type = COMMAND;
-            msg.cmd  = TIME;
-            write(fd[WRITE], &msg, sizeof(struct pipe_msg));
+            send_pipe_msg(fd[WRITE], COMMAND, TIME, NULL);
 
             read(fd[READ], &in_msg, sizeof(struct pipe_msg));
-            printf("Status: %s\n", in_msg.text);
+            printf("Server Time: %s\n", asctime(&in_msg.body.time));
 
             break;
+        
         default:
             printf("Incorrect command. Type 'help' for list of commands.\n");
             break;
@@ -145,30 +165,28 @@ static int exec_command(const int fd[], const int cmd, char *input)
 /**
  *
  */
-static int client(const char *pipes[])
+static int run_client(const char *pipes[])
 {
-    printf("in %s\n", __func__);
     char input[MAX_LEN];
     int fd[2];
-    printf("Trying to open %s.\n", pipes[WRITE]);
+    int cmd;
+    int exit = FALSE;
+
+    /* open write pipe */
     if ((fd[WRITE] = open(pipes[WRITE], O_WRONLY)) < 0)
     {
         fprintf(stderr, "Error opening %s in func: %s\n", pipes[WRITE], __func__);
         return ERROR;
     }
-    printf("Opened %s.\n", pipes[WRITE]);
 
-    printf("Trying to open %s.\n", pipes[READ]);
+    /* open read pipe */
     if ((fd[READ] = open(pipes[READ], O_RDONLY)) < 0)
     {
         fprintf(stderr, "Error opening %s in func: %s\n", pipes[READ], __func__);
         return ERROR;
     }
-    printf("Opened %s.\n", pipes[READ]);
 
     /* main client loop */
-    int exit = 0;
-    int cmd;
     while (exit != TRUE)
     {
         /* prompt user */
@@ -178,11 +196,12 @@ static int client(const char *pipes[])
         memset(input, '\0', sizeof(char)*MAX_LEN);
         fgets(input, MAX_LEN-1, stdin);
 
-        /* parse command */
-
-        cmd = parse_command(input);
+        /* handle command */
+        cmd  = parse_command(input);
         exit = exec_command(fd, cmd, input);
     }
+
+    /* clean up */
     close(fd[WRITE]);
     close(fd[READ]);
     return SUCCESS;
@@ -212,13 +231,13 @@ int main(int argc, char **argv)
 
     mode = S_IRUSR | S_IWUSR;
 
-    if (mkfifo(pipes[READ], mode) < 0 && (errno != EEXIST))
+    if ((mkfifo(pipes[READ], mode) < 0) && (errno != EEXIST))
     {
         fprintf(stderr, "Error creating %s FIFO\n", pipes[READ]);
         exit(ERROR);
     }
 
-    if (mkfifo(pipes[WRITE], mode) < 0 && (errno != EEXIST))
+    if ((mkfifo(pipes[WRITE], mode) < 0) && (errno != EEXIST))
     {
         fprintf(stderr, "Error creating %s FIFO\n", write_pipe);
         exit(ERROR);
@@ -232,7 +251,12 @@ int main(int argc, char **argv)
     else
         printf("Connected to the server.\n");
 
-    client(pipes);
+    if (run_client(pipes) != SUCCESS)
+    {
+        fprintf(stderr, "Error running client for PID: %d\n", getpid());
+        exit(ERROR);
+    }
+
 
     exit(SUCCESS);
 } /* function main */
