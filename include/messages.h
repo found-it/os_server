@@ -1,9 +1,8 @@
-
 /**
  *  \file   messages.h
  *  \author James Petersen
  *
- *  \brief
+ *  \brief  Describes the message parts and breakdown.
  */
 
 #ifndef MESSAGES_H
@@ -16,8 +15,11 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+/* Max buffer length */
+#define MAX_LEN  100
+
 /**
- *  Message type
+ *  Message type flag
  */
 enum msg_type
 {
@@ -28,7 +30,7 @@ enum msg_type
 
 
 /**
- *  Command type
+ *  Command type flag
  */
 enum cmd_type
 {
@@ -54,14 +56,14 @@ struct msg_flags
  */
 union msg_body
 {
-    char text[MAX_LEN];
-    struct tm time;
-    int status;
+    char text[MAX_LEN]; /* text for SEND */
+    struct tm time;     /* time for TIME */
+    int status;         /* status for STATUS */
 };
 
 
 /**
- *  Message struct
+ *  Main message struct, used to talk between processes
  */
 struct pipe_msg
 {
@@ -77,16 +79,14 @@ struct pipe_msg
 struct connect_msg
 {
     pid_t pid;
-    char readp[CLIENT_RD_NAME_SIZE];
-    char writep[CLIENT_WR_NAME_SIZE];
 };
 
 
 /**
  *  send_pipe_msg()
  *
- *  \brief  This function writes the appropriate pipe_msg
- *          to the pipe described by fd.
+ *  \brief  Fills a pipe_msg with the appropriate information
+ *          and sends it to the pipe described by fd.
  */
 int send_pipe_msg(int fd, int type, int cmd, void *text);
 

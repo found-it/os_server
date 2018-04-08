@@ -11,6 +11,9 @@
 #include "../include/messages.h"
 
 
+/**
+ *  All the client commands that are available.
+ */
 enum commands
 {
     Send    = 0,
@@ -21,15 +24,17 @@ enum commands
     Time    = 5
 };
 
+
 /**
  *  strip_newline macro, strips newline off incoming message.
  */
 #define strip_newline(str) str[strlen(str)-1] = '\0'
 
+
 /**
  *  usage()
  *
- *  \brief  This function prints a help menu for the client.
+ *  \brief  Prints a help menu for the client.
  */
 static void usage(void)
 {
@@ -39,20 +44,20 @@ static void usage(void)
     printf(GREEN " help " RESET "       - Displays help menu\n");
     printf(GREEN " send:" TEAL "<text>" RESET " - Sends " TEAL "<text>" RESET " to the server\n");
     printf("               (note: the ':' must be present)\n");
-    printf(GREEN " status " RESET "     - Exits the client and server processes\n");
-    printf(GREEN " time " RESET "       - Exits the client and server processes\n");
+    printf(GREEN " time " RESET "       - Returns the current date and time from the server.\n");
+    printf(GREEN " status " RESET "     - Returns the number of clients connected to the server.\n");
     printf(GREEN " exit " RESET "       - Exits the client and server processes\n");
     printf("----------------------------------------------------------\n");
     printf("\n");
-} /* function usage */
-
-
+}
 
 
 /**
+ *  request_connection()
  *
+ *  \brief  Attempts to connect to the server.
  */
-static int request_connection(const char *pipes[])
+static int request_connection()
 {
     int srv_fd;
     struct connect_msg cmsg;
@@ -63,8 +68,6 @@ static int request_connection(const char *pipes[])
 
     /* construct connection message */
     cmsg.pid  = getpid();
-    strncpy(cmsg.readp,  pipes[READ], CLIENT_RD_NAME_SIZE);
-    strncpy(cmsg.writep, pipes[WRITE], CLIENT_WR_NAME_SIZE);
 
     /* send connection message */
     printf("Attempting to connect to the server...\n");
@@ -80,10 +83,10 @@ static int request_connection(const char *pipes[])
 }
 
 
-
-
 /**
+ *  parse_command()
  *
+ *  \brief  Parses the input string to get the command.
  */
 static int parse_command(const char *input)
 {
@@ -99,10 +102,10 @@ static int parse_command(const char *input)
     else if (strncmp(input, "\n", 1) == 0)      /* ignore stray <return> */
         return Enter;
 
-    else if (strncmp(input, "status", 6) == 0)
+    else if (strncmp(input, "status", 6) == 0)  /* status command */
         return Status;
 
-    else if (strncmp(input, "time", 4) == 0)
+    else if (strncmp(input, "time", 4) == 0)    /* time command */
         return Time;
 
     else                                        /* incorrect command */
@@ -110,27 +113,80 @@ static int parse_command(const char *input)
 }
 
 
+/**
+ *  client_send()
+ *
+ *  \brief  Sends the input string to the server.
+ */
+static inline void client_send(const int fd, char *input)
+{
+    /* strip off 'send:' and '\n' */
+    memmove(input, input + 5, MAX_LEN - 5);
+    strip_newline(input);
+    send_pipe_msg(fd, TEXT, NA, input);
+}
 
 
 /**
+ *  client_exit()
  *
+ *  \brief  Sends exit command to the server.
+ */
+static inline void client_exit(const int fd)
+{
+    printf(RED "Client (PID: %d) exits\n" RESET, getpid());
+    send_pipe_msg(fd, COMMAND, EXIT, NULL);
+}
+
+
+/**
+ *  get_status()
+ *
+ *  \brief  Gets the number of connected clients from the server.
+ */
+static inline void get_status(const int fd[])
+{
+    struct pipe_msg in_msg;
+    send_pipe_msg(fd[WRITE], COMMAND, STATUS, NULL);
+
+    /* read the result */
+    read(fd[READ], &in_msg, sizeof(struct pipe_msg));
+    printf("Number of Clients: %d\n\n", in_msg.body.status);
+}
+
+
+/**
+ *  get_time()
+ *
+ *  \brief  Gets the time from the server.
+ */
+static inline void get_time(const int fd[])
+{
+    struct pipe_msg in_msg;
+    send_pipe_msg(fd[WRITE], COMMAND, TIME, NULL);
+
+    /* read the result */
+    read(fd[READ], &in_msg, sizeof(struct pipe_msg));
+    printf("Server Time: %s\n", asctime(&in_msg.body.time));
+}
+
+
+/**
+ *  exec_command()
+ *
+ *  \brief  Executes the commands issued to the client by the user.
  */
 static int exec_command(const int fd[], const int cmd, char *input)
 {
     int exit = FALSE;
-    struct pipe_msg in_msg;
     switch (cmd)
     {
         case Send:
-            /* strip off 'send:' and '\n' */
-            memmove(input, input + 5, MAX_LEN - 5);
-            strip_newline(input);
-            send_pipe_msg(fd[WRITE], TEXT, NA, input);
+            client_send(fd[WRITE], input);
             break;
 
         case Exit:
-            printf(RED "Client (PID: %d) exits\n" RESET, getpid());
-            send_pipe_msg(fd[WRITE], COMMAND, EXIT, NULL);
+            client_exit(fd[WRITE]);
             exit = TRUE;
             break;
 
@@ -143,20 +199,11 @@ static int exec_command(const int fd[], const int cmd, char *input)
             break;
 
         case Status:
-            send_pipe_msg(fd[WRITE], COMMAND, STATUS, NULL);
-
-			/* read the result */
-            read(fd[READ], &in_msg, sizeof(struct pipe_msg));
-            printf("Number of Clients: %d\n", in_msg.body.status);
-
+            get_status(fd);
             break;
 
         case Time:
-            send_pipe_msg(fd[WRITE], COMMAND, TIME, NULL);
-
-			/* read the result */
-            read(fd[READ], &in_msg, sizeof(struct pipe_msg));
-            printf("Server Time: %s\n", asctime(&in_msg.body.time));
+            get_time(fd);
             break;
 
         default:
@@ -167,9 +214,10 @@ static int exec_command(const int fd[], const int cmd, char *input)
 }
 
 
-
 /**
+ *  run_client()
  *
+ *  \brief  This is the main client operation loop.
  */
 static int run_client(const char *pipes[])
 {
@@ -177,6 +225,9 @@ static int run_client(const char *pipes[])
     int fd[2];
     int cmd;
     int exit = FALSE;
+
+    /* display the usage */
+    usage();
 
     /* open write pipe */
     if ((fd[WRITE] = open(pipes[WRITE], O_WRONLY)) < 0)
@@ -214,42 +265,45 @@ static int run_client(const char *pipes[])
 }
 
 
-
-
-
 /**
  *  main()
  *
- *  \brief  This is the main server loop function.
+ *  \brief  The main client loop function.
  */
-int main(int argc, char **argv)
+int main(void)
 {
-    char read_pipe[CLIENT_RD_NAME_SIZE];
-    char write_pipe[CLIENT_WR_NAME_SIZE];
+    char read_pipe[CLIENT_PIPE_NAME_SIZE];
+    char write_pipe[CLIENT_PIPE_NAME_SIZE];
     const char *pipes[2];
     mode_t mode;
 
-    snprintf(read_pipe,  CLIENT_RD_NAME_SIZE, "./pipes/%d_read",  getpid());
-    snprintf(write_pipe, CLIENT_WR_NAME_SIZE, "./pipes/%d_write", getpid());
+    /* create the FIFO name strings */
+    snprintf(read_pipe,  CLIENT_PIPE_NAME_SIZE, "./pipes/%d_read",  getpid());
+    snprintf(write_pipe, CLIENT_PIPE_NAME_SIZE, "./pipes/%d_write", getpid());
 
+    /* put the FIFO names into an array */
     pipes[READ]  = read_pipe;
     pipes[WRITE] = write_pipe;
 
+    /* set the permissions of the FIFO's */
     mode = S_IRUSR | S_IWUSR;
 
+    /* create the clients read FIFO */
     if ((mkfifo(pipes[READ], mode) < 0) && (errno != EEXIST))
     {
         fprintf(stderr, "Error creating %s FIFO\n", pipes[READ]);
         exit(ERROR);
     }
 
+    /* create the clients write FIFO */
     if ((mkfifo(pipes[WRITE], mode) < 0) && (errno != EEXIST))
     {
         fprintf(stderr, "Error creating %s FIFO\n", write_pipe);
         exit(ERROR);
     }
 
-    if (request_connection(pipes) != SUCCESS)
+    /* attempt to connect to the server */
+    if (request_connection() != SUCCESS)
     {
         fprintf(stderr, "Connection request failed for PID: %d\n", getpid());
         exit(ERROR);
@@ -257,12 +311,12 @@ int main(int argc, char **argv)
     else
         printf("Connected to the server.\n");
 
+    /* run the main client loop */
     if (run_client(pipes) != SUCCESS)
     {
         fprintf(stderr, "Error running client for PID: %d\n", getpid());
         exit(ERROR);
     }
 
-
     exit(SUCCESS);
-} /* function main */
+}

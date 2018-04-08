@@ -2,7 +2,7 @@
  *  \file   server.h
  *  \author James Petersen
  *
- *  \brief
+ *  \brief  Main server header file
  */
 
 #ifndef SERVER_H
@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <sys/types.h>
 
 

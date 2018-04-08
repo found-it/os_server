@@ -12,14 +12,12 @@
 /* Global defines */
 #define SUCCESS  0
 #define ERROR   -1
-#define MAX_LEN  100
+
 #define WRITE    1
 #define READ     0
+
 #define TRUE     1
 #define FALSE    0
-
-#define CLIENT_WR_NAME_SIZE 22
-#define CLIENT_RD_NAME_SIZE 19
 
 /* Colors */
 #define RED   "\e[38;2;255;0;0m"
@@ -29,7 +27,11 @@
 #define TEAL  "\e[38;2;0;255;255m"
 #define RESET "\e[0m"
 
-#define SRV_READ  "/tmp/server_np"
+/* Max size of client FIFO names */
+#define CLIENT_PIPE_NAME_SIZE 22
+
+/* Location of the server FIFO */
+#define SRV_READ  "/tmp/server_fifo"
 
 
 #endif

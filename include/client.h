@@ -2,7 +2,7 @@
  *  \file   client.h
  *  \author James Petersen
  *
- *  \brief
+ *  \brief  Main client header file.
  */
 
 #ifndef CLIENT_H
