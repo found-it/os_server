@@ -19,6 +19,7 @@ TAR_S  = cs_2_server
 PIPES  = ./pipes
 
 all: server client
+	mkdir -p pipes
 
 server: $(OBJ_S)
 	$(CC) $(CFLAGS) -o $(TAR_S) $(OBJ_S)

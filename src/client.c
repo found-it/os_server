@@ -145,6 +145,7 @@ static int exec_command(const int fd[], const int cmd, char *input)
         case Status:
             send_pipe_msg(fd[WRITE], COMMAND, STATUS, NULL);
 
+			/* read the result */
             read(fd[READ], &in_msg, sizeof(struct pipe_msg));
             printf("Number of Clients: %d\n", in_msg.body.status);
 
@@ -153,6 +154,7 @@ static int exec_command(const int fd[], const int cmd, char *input)
         case Time:
             send_pipe_msg(fd[WRITE], COMMAND, TIME, NULL);
 
+			/* read the result */
             read(fd[READ], &in_msg, sizeof(struct pipe_msg));
             printf("Server Time: %s\n", asctime(&in_msg.body.time));
             break;
