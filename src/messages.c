@@ -28,10 +28,10 @@ int send_pipe_msg(int fd, int type, int cmd, void *body)
         strncpy(msg.body.text, (char*)body, MAX_LEN);
 
     else if (type == RESPONSE && cmd == TIME)           /* time response */
-        msg.body.time = *((struct tm *)body);
+        msg.body.time = *((struct tm*)body);
 
     else if (type == RESPONSE && cmd == STATUS)         /* status response */
-        msg.body.status = *((int *)body);
+        msg.body.status = *((int*)body);
 
     /* send the message */
     if (write(fd, &msg, sizeof(msg)) < 0)

@@ -26,7 +26,7 @@ enum commands
 
 
 /**
- *  strip_newline macro, strips newline off incoming message.
+ *  strip_newline macro, strips newline off outgoing message.
  */
 #define strip_newline(str) str[strlen(str)-1] = '\0'
 
@@ -57,14 +57,14 @@ static void usage(void)
  *
  *  \brief  Attempts to connect to the server.
  */
-static int request_connection()
+static int request_connection(void)
 {
     int srv_fd;
     struct connect_msg cmsg;
     int stat = SUCCESS;
 
     /* open server FIFO */
-    srv_fd = open(SRV_READ, O_WRONLY);
+    srv_fd = open(SRV_FIFO, O_WRONLY);
 
     /* construct connection message */
     cmsg.pid  = getpid();

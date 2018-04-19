@@ -88,6 +88,6 @@ struct connect_msg
  *  \brief  Fills a pipe_msg with the appropriate information
  *          and sends it to the pipe described by fd.
  */
-int send_pipe_msg(int fd, int type, int cmd, void *text);
+int send_pipe_msg(int fd, int type, int cmd, void *body);
 
 #endif

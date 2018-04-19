@@ -31,7 +31,7 @@
 #define CLIENT_PIPE_NAME_SIZE 22
 
 /* Location of the server FIFO */
-#define SRV_READ  "/tmp/server_fifo"
+#define SRV_FIFO  "/tmp/server_fifo"
 
 
 #endif

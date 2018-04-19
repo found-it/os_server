@@ -58,6 +58,7 @@ static int send_time(const int fd)
  */
 static int exec_command(const int fd[], const int cmd)
 {
+    int exit = FALSE;
     switch (cmd)
     {
         case TIME:
@@ -69,7 +70,7 @@ static int exec_command(const int fd[], const int cmd)
             break;
 
         case EXIT:
-            return TRUE;
+            exit = TRUE;
             break;
 
         default:
@@ -164,14 +165,14 @@ int main(void)
     mode = S_IRUSR | S_IWUSR;
 
     /* make the server FIFO */
-    if (mkfifo(SRV_READ, mode) < 0 && (errno != EEXIST))
+    if (mkfifo(SRV_FIFO, mode) < 0 && (errno != EEXIST))
     {
         fprintf(stderr, "Error creating server read FIFO\n");
         exit(ERROR);
     }
 
     /* open up the server FIFO */
-    srv_fd = open(SRV_READ, O_RDONLY);
+    srv_fd = open(SRV_FIFO, O_RDONLY);
     memset(&conn_msg, '\0', sizeof(struct connect_msg));
 
     /* listen for new client connections */
